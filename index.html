@@ -314,7 +314,8 @@ function syncToGoogleSheet(type) {
   const cost = data[current][date].cost.amount;
   const costType = data[current][date].cost.type;
 
-  fetch("https://script.google.com/macros/s/AKfycbzVOcXQ2WD6kPBrG1gObvIXhpG8SW0Al2YTR6tsfFcU7q465KmF1yxB_uRhH54FutBuFw/exec", {
+  https://script.google.com/macros/s/AKfycbwRTURxRSUWP_xE-BKdpHHcoWzjshzFvnKGdNNdIDEJKPHTA9NBOmqd1LXamQn5LAcdUg/exec
+
     method: "POST",
     body: JSON.stringify({
       date: date,
