@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>每日销售记录系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; display: flex; justify-content: center; }
+    .container { width: 90%; max-width: 1000px; background: #fff; padding: 20px; margin-top: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; text-align: center; }
+    h1 { color: darkred; margin-bottom: 0; }
+    h2 { color: green; font-size: 2rem; margin-top: 5px; display: flex; justify-content: center; align-items: center; }
+    h2::before { content: "🌿 "; margin-right: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; display: none; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
+    th { background: #eee; }
+    .summary, .total { margin-top: 15px; font-weight: bold; color: darkred; display: flex; justify-content: space-around; gap: 10%; }
+    .total { color: red; }
+    .btn-bar { text-align: center; margin: 15px 0; }
+    button { margin: 8px; padding: 10px 20px; font-size: 1.1rem; }
+    input[type="text"], select, input[type="date"] { font-size: 1.1rem; padding: 6px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>每日销售记录系统</h1>
+    <h2 id="companyTitle">Lover Legend Gardening</h2>
+
+    <div class="btn-bar">
+      <button onclick="switchCompany()">切换公司</button>
+    </div>
+
+    <div>
+      <label>日期：</label>
+      <input type="date" id="date"><br/>
+      <label>销售额（RM）：</label>
+      <input type="text" id="sales" value="0.00">
+      <button onclick="submitData('sales')">提交</button>
+      <button onclick="modifyData('sales')">修改</button><br/>
+      <label>费用（RM）：</label>
+      <input type="text" id="cost" value="0.00">
+      <select id="cost-type">
+        <option value="杂费">杂费</option>
+        <option value="薪水">薪水</option>
+      </select>
+      <button onclick="submitData('cost')">提交</button>
+      <button onclick="modifyData('cost')">修改</button>
+    </div>
+
+    <div class="summary">
+      <div id="summary-sale"></div>
+      <div id="summary-cost"></div>
+    </div>
+
+    <div class="total">
+      <div id="total-sale"></div>
+      <div id="total-cost"></div>
+    </div>
+
+    <button onclick="toggleTable()">显示 / 隐藏明细</button>
+    <button onclick="exportToExcel()">导出为 CSV</button>
+    <label><button onclick="document.getElementById('fileInput').click()">Restore Excel</button><input id="fileInput" type="file" accept=".csv" onchange="importFromCSV(event)" style="display:none;"></label>
+    <button onclick="syncToGoogleSheet()">写入 Google 表格</button>
+
+    <table id="data-table">
+      <thead><tr><th>日期</th><th>销售额</th><th>费用</th></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+<script>
+  // 与前面相同的逻辑初始化 data 与 render 等函数
+  const format = val => parseFloat(val || 0).toLocaleString('en-MY', { style: 'decimal', minimumFractionDigits: 2 });
+  const cached = localStorage.getItem("bonsai_data");
+  const data = cached ? JSON.parse(cached) : { adenium: {}, gardening: {} };
+  let current = "gardening";
+
+  document.getElementById("date").valueAsDate = new Date();
+
+  function switchCompany() {
+    current = current === 'adenium' ? 'gardening' : 'adenium';
+    document.getElementById("companyTitle").innerText = current === 'adenium' ? 'Lover Legend Adenium' : 'Lover Legend Gardening';
+    render();
+    document.getElementById("sales").value = "0.00";
+    document.getElementById("cost").value = "0.00";
+  }
+
+  function submitData(type) {
+    const date = document.getElementById("date").value;
+    if (!data[current][date]) data[current][date] = { sales: 0, cost: { amount: 0, type: "杂费" } };
+    if (type === 'cost') {
+      if (data[current][date].cost.amount !== 0) return alert("已有人记录，不能覆盖，请用修改");
+      const val = document.getElementById(type).value.replace(/,/g, '');
+      const costType = document.getElementById("cost-type").value;
+      data[current][date][type] = { amount: parseFloat(val), type: costType };
+    } else {
+      if (data[current][date][type] !== 0) return alert("已有人记录，不能覆盖，请用修改");
+      const val = document.getElementById(type).value.replace(/,/g, '');
+      data[current][date][type] = parseFloat(val);
+    }
+    render();
+  }
+
+  function modifyData(type) {
+    const date = document.getElementById("date").value;
+    if (!data[current][date]) data[current][date] = { sales: 0, cost: { amount: 0, type: "杂费" } };
+    const val = document.getElementById(type).value.replace(/,/g, '');
+    if (type === 'cost') {
+      const costType = document.getElementById("cost-type").value;
+      data[current][date][type] = { amount: parseFloat(val), type: costType };
+    } else {
+      data[current][date][type] = parseFloat(val);
+    }
+    render();
+  }
+
+  function render() {
+    let totalSales = 0, totalCost = 0, rows = '';
+    for (const d in data[current]) {
+      const s = data[current][d].sales, c = data[current][d].cost.amount;
+      const t = data[current][d].cost.type;
+      totalSales += s; totalCost += c;
+      rows += `<tr><td>${d}</td><td>RM ${format(s)}</td><td>RM ${format(c)}（${t}）</td></tr>`;
+    }
+    document.getElementById("summary-sale").innerText = `销售额：RM ${format(totalSales)}`;
+    document.getElementById("summary-cost").innerText = `费用：RM ${format(totalCost)}`;
+
+    let overallSales = 0, overallCost = 0;
+    for (const company in data) {
+      for (const d in data[company]) {
+        overallSales += data[company][d].sales;
+        overallCost += data[company][d].cost.amount;
+      }
+    }
+    document.getElementById("total-sale").innerText = `总销售（两间公司）：RM ${format(overallSales)}`;
+    document.getElementById("total-cost").innerText = `总费用：RM ${format(overallCost)}`;
+    document.getElementById("table-body").innerHTML = rows;
+    localStorage.setItem("bonsai_data", JSON.stringify(data));
+  }
+
+  function toggleTable() {
+    const table = document.getElementById("data-table");
+    table.style.display = table.style.display === "none" ? "table" : "none";
+  }
+
+  function exportToExcel() {
+    let rows = [["公司", "日期", "销售额 (RM)", "费用 (RM)", "类型"]];
+    for (const company in data) {
+      for (const d in data[company]) {
+        const s = data[company][d].sales.toFixed(2);
+        const c = data[company][d].cost.amount.toFixed(2);
+        const t = data[company][d].cost.type;
+        rows.push([company, d, s, c, t]);
+      }
+    }
+    const csv = rows.map(e => e.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "销售记录.csv";
+    link.click();
+  }
+
+  function importFromCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split("\n").filter(line => line.trim());
+      const headers = lines.shift().split(",");
+      const newData = { adenium: {}, gardening: {} };
+      for (const line of lines) {
+        const [company, date, sales, cost, type] = line.split(",");
+        if (!company || !date || isNaN(sales)) continue;
+        if (!newData[company]) newData[company] = {};
+        newData[company][date] = {
+          sales: parseFloat(sales),
+          cost: { amount: parseFloat(cost), type: (type || "杂费").replace(/\r/g, "").trim() }
+        };
+      }
+      Object.assign(data.adenium, newData.adenium);
+      Object.assign(data.gardening, newData.gardening);
+      render();
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function syncToGoogleSheet() {
+    const date = document.getElementById("date").value;
+    const company = current === 'adenium' ? 'Lover Legend Adenium' : 'Lover Legend Gardening';
+    const sales = data[current][date].sales;
+    const cost = data[current][date].cost.amount;
+    const type = data[current][date].cost.type;
+    fetch("https://script.google.com/macros/s/AKfycbzUK1k_7SYjUMkHpYPD4fkmgKTNf0nAK1S5L3sUWzc9O_0aqKc_eDYaXmv4Kz0sMV0yOQ/exec", {
+      method: "POST",
+      body: JSON.stringify({ date, company, sales, cost, type }),
+      headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(res => alert("同步成功！"))
+    .catch(err => alert("同步失败：" + err.message));
+  }
+
+  render();
+</script>
+</body>
+</html>
