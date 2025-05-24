@@ -1,0 +1,503 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>每日销售记录系统</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; display: flex; justify-content: center; }
+    .container { width: 90%; max-width: 1000px; background: #fff; padding: 20px; margin-top: 20px;
+      border-radius: 10px; box-shadow: 0 0 10px #ccc; text-align: center; }
+    h1 { color: darkred; margin-bottom: 0; }
+    h2 { color: green; font-size: 2rem; margin-top: 5px; display: flex; justify-content: center; align-items: center; }
+    h2::before { content: "🌿 "; margin-right: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; display: none; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
+    th { background: #eee; }
+    .summary, .total { margin-top: 15px; font-weight: bold; color: darkred; display: flex; justify-content: space-around; gap: 10%; }
+    .total { color: red; }
+    .btn-bar { text-align: center; margin: 15px 0; }
+    button { margin: 5px; padding: 6px 12px; }
+    input[type="text"] { text-align: right; }
+    input::-webkit-inner-spin-button,
+    input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 style="display:flex; justify-content:center; align-items:center; gap:10px;">
+    每日销售记录系统
+    <img src="data:image/jpeg;base64,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" alt="logo" style="height:50px; vertical-align:middle; border-radius:8px;" />
+  </h1>
+  <h2 id="companyTitle">Lover Legend Gardening</h2>
+
+  <div class="btn-bar">
+    <button onclick="switchCompany()">切换公司</button>
+  </div>
+
+  <div>
+    <label>日期：</label>
+    <input type="date" id="date" min="2025-05-01" max="2025-05-23"><br/>
+    <label>销售额（RM）：</label>
+    <input type="text" id="sales" value="0.00" onblur="formatInput(this)">
+    <button onclick="submitData('sales')">提交</button>
+    <button onclick="modifyData('sales')">修改</button><br/>
+    <label>费用（RM）：</label>
+    <input type="text" id="cost" value="0.00" onblur="formatInput(this)">
+    <select id="cost-type">
+      <option value="杂费" selected>杂费</option>
+      <option value="薪水">薪水</option>
+    </select>
+    <button onclick="submitData('cost')">提交</button>
+    <button onclick="modifyData('cost')">修改</button>
+  </div>
+
+  <div class="summary">
+    <div id="summary-sale"></div>
+    <div id="summary-cost"></div>
+  </div>
+
+  <div class="total">
+    <div id="total-sale"></div>
+    <div id="total-cost"></div>
+  </div>
+
+  <button onclick="toggleTable()">显示 / 隐藏明细</button>
+  <button onclick="exportToExcel()">导出为 CSV</button>
+    <button onclick="restoreFromGoogleSheet()">Restore</button>
+  <label style="display:inline-block;"><input id="fileInput" type="file" accept=".csv" onchange="importFromCSV(event)" style="display:none;"></label>
+
+  <table id="data-table">
+    <thead><tr><th>日期</th><th>销售额</th><th>费用</th></tr></thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+<script>
+  document.getElementById("date").valueAsDate = new Date("2025-05-23");
+  const format = val => parseFloat(val || 0).toLocaleString('en-MY', { style: 'decimal', minimumFractionDigits: 2 });
+
+  const cached = localStorage.getItem("bonsai_data");
+  const data = cached ? JSON.parse(cached) : {
+    adenium: {
+      "2025-05-01": {sales:1450, cost:{amount:0,type:"杂费"}}, "2025-05-02": {sales:1319, cost:{amount:0,type:"杂费"}},
+      "2025-05-03": {sales:1658, cost:{amount:0,type:"杂费"}}, "2025-05-04": {sales:841, cost:{amount:0,type:"杂费"}},
+      "2025-05-05": {sales:689, cost:{amount:0,type:"杂费"}}, "2025-05-06": {sales:0, cost:{amount:0,type:"杂费"}},
+      "2025-05-07": {sales:621, cost:{amount:0,type:"杂费"}}, "2025-05-08": {sales:555, cost:{amount:0,type:"杂费"}},
+      "2025-05-09": {sales:398, cost:{amount:0,type:"杂费"}}, "2025-05-10": {sales:733, cost:{amount:0,type:"杂费"}},
+      "2025-05-11": {sales:1777, cost:{amount:0,type:"杂费"}}, "2025-05-12": {sales:702, cost:{amount:0,type:"杂费"}},
+      "2025-05-13": {sales:124, cost:{amount:0,type:"杂费"}}, "2025-05-14": {sales:82, cost:{amount:0,type:"杂费"}},
+      "2025-05-15": {sales:467, cost:{amount:0,type:"杂费"}}, "2025-05-16": {sales:376, cost:{amount:0,type:"杂费"}},
+      "2025-05-17": {sales:1335, cost:{amount:0,type:"杂费"}}, "2025-05-18": {sales:1266, cost:{amount:0,type:"杂费"}},
+      "2025-05-19": {sales:215, cost:{amount:0,type:"杂费"}}, "2025-05-20": {sales:272, cost:{amount:0,type:"杂费"}},
+      "2025-05-21": {sales:272, cost:{amount:0,type:"杂费"}}, "2025-05-22": {sales:288, cost:{amount:0,type:"杂费"}},
+      "2025-05-23": {sales:1000, cost:{amount:120,type:"杂费"}}
+    },
+    gardening: {
+      "2025-05-01": {sales:1931, cost:{amount:0,type:"杂费"}}, "2025-05-02": {sales:708, cost:{amount:0,type:"杂费"}},
+      "2025-05-03": {sales:1597, cost:{amount:0,type:"杂费"}}, "2025-05-04": {sales:3182, cost:{amount:0,type:"杂费"}},
+      "2025-05-05": {sales:997, cost:{amount:0,type:"杂费"}}, "2025-05-06": {sales:1029, cost:{amount:0,type:"杂费"}},
+      "2025-05-07": {sales:659, cost:{amount:0,type:"杂费"}}, "2025-05-08": {sales:2007, cost:{amount:0,type:"杂费"}},
+      "2025-05-09": {sales:1447, cost:{amount:0,type:"杂费"}}, "2025-05-10": {sales:1229, cost:{amount:0,type:"杂费"}},
+      "2025-05-11": {sales:6636, cost:{amount:0,type:"杂费"}}, "2025-05-12": {sales:1559, cost:{amount:0,type:"杂费"}},
+      "2025-05-13": {sales:2789, cost:{amount:0,type:"杂费"}}, "2025-05-14": {sales:661, cost:{amount:0,type:"杂费"}},
+      "2025-05-15": {sales:1080, cost:{amount:0,type:"杂费"}}, "2025-05-16": {sales:606, cost:{amount:0,type:"杂费"}},
+      "2025-05-17": {sales:1814, cost:{amount:0,type:"杂费"}}, "2025-05-18": {sales:1687, cost:{amount:0,type:"杂费"}},
+      "2025-05-19": {sales:720, cost:{amount:0,type:"杂费"}}, "2025-05-20": {sales:1163, cost:{amount:0,type:"杂费"}},
+      "2025-05-21": {sales:2609.5, cost:{amount:0,type:"杂费"}}, "2025-05-22": {sales:1649, cost:{amount:0,type:"杂费"}},
+      "2025-05-23": {sales:0, cost:{amount:0,type:"杂费"}}
+    }
+  };
+  let current = "gardening";
+
+  function switchCompany() {
+    current = current === 'adenium' ? 'gardening' : 'adenium';
+    document.getElementById("companyTitle").innerText = current === 'adenium' ? 'Lover Legend Adenium' : 'Lover Legend Gardening';
+    render();
+  document.getElementById("sales").value = "0.00";
+  document.getElementById("cost").value = "0.00";
+  document.getElementById("cost-type").value = "杂费";
+  }
+
+  function formatInput(el) {
+    let val = parseFloat(el.value.replace(/,/g, '')) || 0;
+    el.value = val.toLocaleString('en-MY', { style: 'decimal', minimumFractionDigits: 2 });
+  }
+
+  function submitData(type) {
+    const date = document.getElementById("date").value;
+    if (!data[current][date]) data[current][date] = { sales: 0, cost: { amount: 0, type: "杂费" } };
+    if (type === 'cost') {
+      if (!data[current][date].cost || typeof data[current][date].cost !== 'object') {
+        data[current][date].cost = { amount: 0, type: "杂费" };
+      }
+      if (data[current][date].cost.amount !== 0) {
+        alert("已有人记录，不能覆盖，请用修改");
+        return;
+      }
+      const raw = document.getElementById(type).value.replace(/,/g, '');
+      const costType = document.getElementById("cost-type").value;
+      data[current][date][type] = {
+        amount: parseFloat(raw) || 0,
+        type: costType
+      };
+    } else {
+      if (data[current][date][type] !== 0) {
+        alert("已有人记录，不能覆盖，请用修改");
+        return;
+      }
+      const raw = document.getElementById(type).value.replace(/,/g, '');
+      data[current][date][type] = parseFloat(raw) || 0;
+    }
+    render();
+  document.getElementById("sales").value = "0.00";
+  document.getElementById("cost").value = "0.00";
+  document.getElementById("cost-type").value = "杂费";
+  }
+
+  function modifyData(type) {
+    const date = document.getElementById("date").value;
+    if (!data[current][date]) data[current][date] = { sales: 0, cost: { amount: 0, type: "杂费" } };
+    const raw = document.getElementById(type).value.replace(/,/g, '');
+    if (type === 'cost') {
+      const costType = document.getElementById("cost-type").value;
+      data[current][date][type] = {
+        amount: parseFloat(raw) || 0,
+        type: costType
+      };
+    } else {
+      data[current][date][type] = parseFloat(raw) || 0;
+    }
+    render();
+  document.getElementById("sales").value = "0.00";
+  document.getElementById("cost").value = "0.00";
+  document.getElementById("cost-type").value = "杂费";
+  }
+
+  function render() {
+    let totalSales = 0, totalCost = 0, rows = '';
+    for (const d in data[current]) {
+      const s = data[current][d].sales, c = data[current][d].cost.amount;
+      const t = data[current][d].cost.type;
+      totalSales += s; totalCost += c;
+      rows += `<tr><td>${d}</td><td>RM ${format(s)}</td><td>RM ${format(c)}（${t}）</td></tr>`;
+    }
+    document.getElementById("summary-sale").innerText = `销售额：RM ${format(totalSales)}`;
+    document.getElementById("summary-cost").innerText = `费用：RM ${format(totalCost)}`;
+
+    let overallSales = 0, overallCost = 0;
+    for (const company in data) {
+      for (const d in data[company]) {
+        overallSales += data[company][d].sales;
+        overallCost += data[company][d].cost.amount;
+      }
+    }
+    document.getElementById("total-sale").innerText = `总销售（两间公司）：RM ${format(overallSales)}`;
+    document.getElementById("total-cost").innerText = `总费用：RM ${format(overallCost)}`;
+
+    document.getElementById("table-body").innerHTML = rows;
+    localStorage.setItem("bonsai_data", JSON.stringify(data));
+  }
+
+  function toggleTable() {
+    const table = document.getElementById("data-table");
+    table.style.display = table.style.display === "none" ? "table" : "none";
+  }
+
+  function exportToExcel() {
+    let rows = [["公司", "日期", "销售额 (RM)", "费用 (RM)", "类型"]];
+    for (const company in data) {
+      for (const d in data[company]) {
+        const s = data[company][d].sales.toFixed(2);
+        const c = data[company][d].cost.amount.toFixed(2);
+        const t = data[company][d].cost.type;
+        rows.push([company, d, s, c, t]);
+      }
+    }
+    let totalSales = 0, totalCost = 0;
+    for (const company in data) {
+      for (const d in data[company]) {
+        totalSales += data[company][d].sales;
+        totalCost += data[company][d].cost.amount;
+      }
+    }
+    rows.push([]);
+    rows.push(["总计", "", totalSales.toFixed(2), totalCost.toFixed(2), ""]);
+
+    const csv = rows.map(e => e.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "销售记录_全年.csv";
+    link.click();
+  }
+
+  render();
+  document.getElementById("sales").value = "0.00";
+  document.getElementById("cost").value = "0.00";
+  document.getElementById("cost-type").value = "杂费";
+
+  function importFromCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split("\n").filter(line => line.trim());
+      const headers = lines.shift().split(",");
+      const newData = { adenium: {}, gardening: {} };
+      for (const line of lines) {
+        const [company, date, sales, cost, type] = line.split(",");
+        if (!company || !date || isNaN(sales)) continue;
+        if (!newData[company]) newData[company] = {};
+        newData[company][date] = {
+          sales: parseFloat(sales) || 0,
+          cost: { amount: parseFloat(cost) || 0, type: type || "杂费" }
+        };
+      }
+      Object.assign(data.adenium, newData.adenium);
+      Object.assign(data.gardening, newData.gardening);
+      alert("导入成功！");
+      document.getElementById("sales").value = "0.00";
+      document.getElementById("cost").value = "0.00";
+      document.getElementById("cost-type").value = "杂费";
+      render();
+  document.getElementById("sales").value = "0.00";
+  document.getElementById("cost").value = "0.00";
+  document.getElementById("cost-type").value = "杂费";
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function importFromCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split("\n").filter(line => line.trim());
+      const headers = lines.shift().split(",");
+      const newData = { adenium: {}, gardening: {} };
+      for (const line of lines) {
+        const [company, date, sales, cost, type] = line.split(",");
+        if (!company || !date || isNaN(sales)) continue;
+        if (!newData[company]) newData[company] = {};
+        newData[company][date] = {
+          sales: parseFloat(sales) || 0,
+          cost: {
+            amount: parseFloat(cost) || 0,
+            type: (type || "杂费").replace(/\r/g, "").trim()
+          }
+        };
+      }
+      Object.assign(data.adenium, newData.adenium);
+      Object.assign(data.gardening, newData.gardening);
+      alert("导入成功！");
+      document.getElementById("sales").value = "0.00";
+      document.getElementById("cost").value = "0.00";
+      document.getElementById("cost-type").value = "杂费";
+      render();
+  document.getElementById("sales").value = "0.00";
+  document.getElementById("cost").value = "0.00";
+  document.getElementById("cost-type").value = "杂费";
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+function syncIfNeeded(date, company) {
+  const sales = parseFloat(document.getElementById("sales").value) || 0;
+  const cost = parseFloat(document.getElementById("cost").value) || 0;
+  const remark = document.getElementById("remark") ? document.getElementById("remark").value : "杂费";
+  syncToGoogleSheet(date, company, sales, cost, remark);
+}
+
+</script>
+
+<script>
+const webhookURL = "https://hook.us2.make.com/afj4ss9wcd61siv5aj8il7msr22ieub1";
+
+// 自动写入 Google Sheet
+function syncToGoogleSheet(date, company, sales, cost, remark) {
+  fetch(webhookURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "save",
+      date: date,
+      company: company,
+      sales: sales,
+      cost: cost,
+      remark: remark
+    })
+  }).then(res => {
+    if (res.ok) {
+      alert("✅ 已成功写入 Google 表格！");
+    } else {
+      alert("❌ 写入失败");
+    }
+  }).catch(() => alert("❌ 无法连接 Google Sheet"));
+}
+
+// 恢复数据
+function restoreFromGoogleSheet() {
+  fetch(webhookURL + "?action=restore")
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.records) {
+        alert("❌ 没有可恢复的记录");
+        return;
+      }
+      const date = document.getElementById("date").value;
+      const company = document.getElementById("companyTitle").innerText.trim();
+      const match = data.records.find(r => r.date === date && r.company === company);
+      if (match) {
+        document.getElementById("sales").value = match.sales;
+        document.getElementById("cost").value = match.cost;
+        if (document.getElementById("remark")) {
+          document.getElementById("remark").value = match.remark || "杂费";
+        }
+        alert("✅ 已恢复该日期记录");
+      } else {
+        alert("⚠️ 无法找到该日期的记录");
+      }
+    })
+    .catch(() => alert("❌ 无法连接 Google Sheet"));
+}
+
+function syncIfNeeded(date, company) {
+  const sales = parseFloat(document.getElementById("sales").value) || 0;
+  const cost = parseFloat(document.getElementById("cost").value) || 0;
+  const remark = document.getElementById("remark") ? document.getElementById("remark").value : "杂费";
+  syncToGoogleSheet(date, company, sales, cost, remark);
+}
+
+</script>
+
+<!-- 恢复按钮 -->
+<div class="btn-bar">
+  
+</div>
+
+
+<script>
+function confirmRestore() {
+  if (confirm("⚠️ 确认要从 Google 恢复数据吗？原本页面上的输入将被覆盖。")) {
+    restoreFromGoogleSheet();
+  }
+}
+</script>
+
+
+<script>
+function autoSendToGoogleSheet(date, company, sales, cost) {
+  fetch("https://hook.us2.make.com/afj4ss9wcd61siv5aj8il7msr22ieub1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      date: date,
+      company: company,
+      sales: sales,
+      cost: cost
+    })
+  });
+}
+
+const originalSubmitData = submitData;
+submitData = function(type) {
+  const date = document.getElementById("date").value;
+  const company = document.getElementById("companyTitle").innerText.trim();
+  const sales = parseFloat(document.getElementById("sales").value) || 0;
+  const cost = parseFloat(document.getElementById("cost").value) || 0;
+
+  originalSubmitData(type);
+
+  setTimeout(() => {
+    autoSendToGoogleSheet(date, company, sales, cost);
+  }, 100);
+};
+
+const originalModifyData = modifyData;
+modifyData = function(type) {
+  const date = document.getElementById("date").value;
+  const company = document.getElementById("companyTitle").innerText.trim();
+  const sales = parseFloat(document.getElementById("sales").value) || 0;
+  const cost = parseFloat(document.getElementById("cost").value) || 0;
+
+  originalModifyData(type);
+
+  setTimeout(() => {
+    autoSendToGoogleSheet(date, company, sales, cost);
+  }, 100);
+};
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+});
+
+function formatDateToMDY(input) {
+  const d = new Date(input);
+  return (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
+}
+
+function resetDateToToday() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+}
+
+function autoSendToGoogleSheet(dateISO, company, salesRaw, costRaw, type) {
+  const payload = {
+    date:  formatDateToMDY(dateISO),
+    company: company.trim(),
+    sales:  parseFloat(salesRaw) || 0,
+    cost:   parseFloat(costRaw)  || 0,
+    type:   type
+  };
+
+  console.log("🚀 发送至 Google Sheet：", payload);
+
+  fetch("https://hook.us2.make.com/afj4ss9wcd61siv5aj8il7msr22ieub1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.text())
+  .then(resp => console.log("✅ Webhook 响应：", resp))
+  .catch(err => console.error("❌ fetch 失败：", err));
+}
+
+const orgSubmit = submitData;
+submitData = function (type) {
+  const iso = document.getElementById("date").value;
+  const co  = document.getElementById("companyTitle").innerText;
+  const s   = document.getElementById("sales").value;
+  const c   = document.getElementById("cost").value;
+  orgSubmit(type);
+  setTimeout(() => {
+    autoSendToGoogleSheet(iso, co, s, c, type);
+    resetDateToToday(); // 提交后还原为今天
+  }, 100);
+};
+
+const orgModify = modifyData;
+modifyData = function (type) {
+  const iso = document.getElementById("date").value;
+  const co  = document.getElementById("companyTitle").innerText;
+  const s   = document.getElementById("sales").value;
+  const c   = document.getElementById("cost").value;
+  orgModify(type);
+  setTimeout(() => {
+    autoSendToGoogleSheet(iso, co, s, c, type);
+    resetDateToToday(); // 修改后还原为今天
+  }, 100);
+};
+</script>
+
+</body>
+</html>
